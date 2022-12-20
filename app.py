@@ -7,13 +7,15 @@ import time
 
 # main menu - add, search, analysis, exit, view
 def menu():
-    print('''
-    \n1. Add book
-    \r2. View book
-    \r3. Search for a book
-    \r4. Book analysis
-    \r5. Exit''')
     while True:
+        print('''
+            \nProgramming Books Tool
+            \r1. Add book
+            \r2. View book
+            \r3. Search for a book
+            \r4. Book analysis
+            \r5. Exit
+            ''')
         choice = input('What would you like to do? ')
         if choice in ['1', '2', '3', '4', '5']:
             return choice
@@ -21,13 +23,26 @@ def menu():
             input('''
             \rPlease choose one of the options above
             \rA number from 1-5
+            \rPress enter to choose again
+            ''')
+
+
+def submenu():
+    while True:
+        print('''
+            \n1. Edit
+            \r2. Delete
+            \r3. Return to main menu
+            ''')
+        choice = input('What would you like to do? ')
+        if choice in ['1', '2', '3']:
+            return choice
+        else:
+            input('''
+            \rPlease choose one of the options above
+            \rA number from 1-3
             \rPress enter to choose again''')
 
-# add books to the db
-# edit books
-# search books 
-# delete books 
-# data cleaning & import from CSV
 def clean_date(date_str):
     months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     split_date = date_str.split(' ')
@@ -47,6 +62,7 @@ def clean_date(date_str):
     else: 
         return return_date
 
+
 def clean_price(price_str):
     try:
         price_float = float(price_str)
@@ -60,6 +76,7 @@ def clean_price(price_str):
         return
     else:
         return int(price_float * 100)    
+
 
 def clean_id(id_str, options):
     try:
@@ -83,6 +100,31 @@ def clean_id(id_str, options):
             \r********************''')
             return
 
+
+def edit_check(column_name, current_value):
+    print(f'\n*** Edit {column_name} ***')
+    if column_name == 'price':
+        print(f'\rCurrent Value: {current_value/100}')
+    elif column_name == 'published_date':
+        print(f'Current Value: {current_value.strftime("%B %d, %Y")}')
+    else:
+        print(f'Current Value: {current_value}')
+
+    if column_name == 'published_date' or column_name == 'price':
+        while True:
+            changes = input('\nWhat would you like to change the value to? ')
+            if column_name == 'published_date':
+                changes = clean_date(changes)
+                if type(changes) == datetime.date: 
+                    return changes
+            elif column_name == 'price':
+                changes = clean_price(changes)
+                if type(changes) == int:
+                    return changes
+    else: 
+        return input('\nWhat would you like to change the value to? ')
+
+
 def add_csv():
     with open('suggested_books.csv') as csvfile:
         data = csv.reader(csvfile)
@@ -97,13 +139,14 @@ def add_csv():
                 session.add(new_book)
         session.commit()
 
+
 # loop runs the project
 def app():
     app_running = True
     while app_running:
         choice = menu()
-        if choice == '1': 
-            #add book
+        #add book
+        if choice == '1':
             title = input('Title: ')
             author = input('Author: ')
             date_error = True
@@ -123,13 +166,13 @@ def app():
             session.commit()
             print(f"'{title}' added")
             time.sleep(1.5)
+        #view all books
         elif choice == '2':
-            #view all books
             for book in session.query(Book):
                 print(f'{book.id} | {book.title} | {book.author}')
             input('\nPress Enter to return to the main menu')
+        #search for a book
         elif choice == '3':
-            #search book
             id_options = []
             for book in session.query(Book):
                 id_options.append(book.id)
@@ -146,13 +189,29 @@ def app():
             \n{the_book.title} by {the_book.author}
             \rPublished: {the_book.published_date}
             \rPrice: ${the_book.price / 100}\n''')
-            input('Press enter to return to the main menu')
+            sub_choice = submenu()
+            #Edit book values
+            if sub_choice == '1':
+                the_book.title = edit_check('title', the_book.title)
+                the_book.author = edit_check('author', the_book.author)
+                the_book.published_date = edit_check('published_date', the_book.published_date)
+                the_book.price = edit_check('price', the_book.price)
+                session.commit()
+                print('Book updated')
+                time.sleep(1.5 )
+            #Delete the book
+            elif sub_choice == '2': 
+                session.delete(the_book)
+                session.commit()
+                print('Book deleted')
+                time.sleep(1.5 )
+        #Analysis of book
         elif choice == '4':
-            #analysis
             pass
         else:
             print('Goodbye')
             app_running = False
+
 
 if __name__ == '__main__':
     Base.metadata.create_all(engine)
