@@ -16,8 +16,8 @@ class Book(Base):
     published_date = Column(Date)
     price = Column(Integer)
 
-    def __repr__(self) -> str:
-        return super().__repr__()
+    def __repr__(self):
+        return f'title: {self.title} author: {self.author}  published_date: {self.published_date} price: {self.price}'
 
 # create a db
     #books.db
