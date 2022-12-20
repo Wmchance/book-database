@@ -61,6 +61,28 @@ def clean_price(price_str):
     else:
         return int(price_float * 100)    
 
+def clean_id(id_str, options):
+    try:
+        book_id = int(id_str)
+    except ValueError:
+        input('''
+        \n**** ID Error ****
+        \rThe book id must be a number from one of the provided options
+        \rPress Enter to try again
+        \r********************''')
+        return
+    else:
+        if book_id in options:
+            return book_id
+        else: 
+            input(f'''
+            \n**** ID Error ****
+            \rThe book id must be a number from the following list:
+            \r{options}
+            \rPress Enter to try again
+            \r********************''')
+            return
+
 def add_csv():
     with open('suggested_books.csv') as csvfile:
         data = csv.reader(csvfile)
@@ -102,13 +124,29 @@ def app():
             print(f"'{title}' added")
             time.sleep(1.5)
         elif choice == '2':
-            #view book
+            #view all books
             for book in session.query(Book):
                 print(f'{book.id} | {book.title} | {book.author}')
             input('\nPress Enter to return to the main menu')
         elif choice == '3':
             #search book
-            pass
+            id_options = []
+            for book in session.query(Book):
+                id_options.append(book.id)
+            id_error = True
+            while id_error:
+                id_choice = input(f'''
+                \nId options: {id_options}
+                \rBook id: ''')
+                id_choice = clean_id(id_choice, id_options)
+                if type(id_choice) == int:
+                    id_error = False
+            the_book = session.query(Book).filter(Book.id == id_choice).first()
+            print(f'''
+            \n{the_book.title} by {the_book.author}
+            \rPublished: {the_book.published_date}
+            \rPrice: ${the_book.price / 100}\n''')
+            input('Press enter to return to the main menu')
         elif choice == '4':
             #analysis
             pass
@@ -120,6 +158,3 @@ if __name__ == '__main__':
     Base.metadata.create_all(engine)
     add_csv()
     app()
-
-    for book in session.query(Book):
-        print(book)
